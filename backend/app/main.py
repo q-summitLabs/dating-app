@@ -3,11 +3,6 @@ from fastapi import FastAPI
 app = FastAPI(title="Dating App Backend")
 
 
-@app.on_event("startup")
-async def startup_event():
-    print("🚀 Server is starting up... Dating App Backend is live!")
-
-
 @app.get("/ping")
 def ping():
     return {"message": "pong"}
