@@ -6,13 +6,14 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ThemedView } from "@/components/themed-view";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { useAuth } from "@/context/auth-context";
+import { useThemeColor } from "@/hooks/use-theme-color";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -21,6 +22,8 @@ export default function ProfileScreen() {
   const [bio, setBio] = useState("");
   const [errors, setErrors] = useState<{ age?: string; bio?: string }>({});
   const [loading, setLoading] = useState(false);
+  const backgroundColor = useThemeColor({}, "background");
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (user) {
@@ -72,8 +75,13 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ThemedView style={styles.container}>
+    <View style={[styles.root, { backgroundColor }]}>
+      <ThemedView
+        style={[
+          styles.container,
+          { paddingTop: insets.top, paddingBottom: insets.bottom },
+        ]}
+      >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
@@ -135,11 +143,14 @@ export default function ProfileScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </ThemedView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },

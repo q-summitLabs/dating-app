@@ -1,15 +1,18 @@
 import { View, StyleSheet, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ThemedView } from "@/components/themed-view";
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/button";
 import { useAuth } from "@/context/auth-context";
+import { useThemeColor } from "@/hooks/use-theme-color";
 import { useEffect } from "react";
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const { isAuthenticated, user, loading } = useAuth();
+  const backgroundColor = useThemeColor({}, "background");
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!loading) {
@@ -26,20 +29,36 @@ export default function WelcomeScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ThemedView style={styles.container}>
+      <View style={[styles.root, { backgroundColor }]}>
+        <ThemedView
+          style={[
+            styles.container,
+            { paddingTop: insets.top, paddingBottom: insets.bottom },
+          ]}
+        >
           <ThemedText>Loading...</ThemedText>
         </ThemedView>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ThemedView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+    <View style={[styles.root, { backgroundColor }]}>
+      <ThemedView
+        style={[
+          styles.container,
+          {
+            paddingTop: insets.top + 32,
+            paddingBottom: Math.max(insets.bottom, 32),
+          },
+        ]}
+      >
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.content}>
-            {/* Logo placeholder - you can replace this with an actual logo */}
             <View style={styles.logoContainer}>
               <View style={styles.logoCircle}>
                 <ThemedText type="title" style={styles.logoText}>
@@ -70,28 +89,40 @@ export default function WelcomeScreen() {
           </View>
         </ScrollView>
       </ThemedView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   container: {
+    flex: 1,
+  },
+  scrollView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 56,
   },
   content: {
-    flex: 1,
+    width: "100%",
+    maxWidth: 420,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    paddingHorizontal: 8,
   },
   logoContainer: {
     flexDirection: "row",
     gap: 16,
-    marginBottom: 32,
+    marginBottom: 40,
+    justifyContent: "center",
+    width: "100%",
   },
   logoCircle: {
     width: 80,
@@ -107,8 +138,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 48,
     fontWeight: "700",
+    marginTop: 16,
     marginBottom: 16,
     textAlign: "center",
+    lineHeight: 56,
   },
   subtitle: {
     fontSize: 18,
