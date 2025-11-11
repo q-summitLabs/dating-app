@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -36,7 +36,7 @@ type GroupConfig = {
   members: GroupMember[];
 };
 
-const groupConfigurations: Record<GroupMode, GroupConfig> = {
+const baseGroupConfigurations: Record<GroupMode, GroupConfig> = {
   two: {
     title: "2 man's",
     members: [
@@ -240,12 +240,30 @@ const groupConfigurations: Record<GroupMode, GroupConfig> = {
   },
 };
 
+const createInitialGroupState = (): Record<GroupMode, GroupConfig> => {
+  return (["two", "three"] as const).reduce(
+    (acc, mode) => {
+      const config = baseGroupConfigurations[mode];
+      acc[mode] = {
+        title: config.title,
+        members: config.members.map((member) => ({
+          ...member,
+          messages: [...member.messages],
+        })),
+      };
+      return acc;
+    },
+    {} as Record<GroupMode, GroupConfig>
+  );
+};
+
 export default function GroupsScreen() {
+  const [groups, setGroups] = useState<Record<GroupMode, GroupConfig>>(
+    () => createInitialGroupState()
+  );
   const [draftMessage, setDraftMessage] = useState("");
   const [groupMode, setGroupMode] = useState<GroupMode>("two");
-  const [selectedCrewId, setSelectedCrewId] = useState<string | null>(
-    groupConfigurations.two.members[0]?.id ?? null
-  );
+  const [selectedCrewId, setSelectedCrewId] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
@@ -267,13 +285,17 @@ export default function GroupsScreen() {
   );
 
   const isWideLayout = width >= 768;
-  const activeConfig = useMemo(() => groupConfigurations[groupMode], [groupMode]);
+  const activeConfig = useMemo(
+    () => groups[groupMode],
+    [groupMode, groups]
+  );
   const activeCrew = useMemo(() => {
     return activeConfig.members.find((member) => member.id === selectedCrewId);
   }, [activeConfig, selectedCrewId]);
 
   useEffect(() => {
-    const defaultCrewId = groupConfigurations[groupMode].members[0]?.id ?? null;
+    const defaultCrewId =
+      baseGroupConfigurations[groupMode].members[0]?.id ?? null;
     setSelectedCrewId(defaultCrewId);
     setDraftMessage("");
   }, [groupMode]);
@@ -287,6 +309,57 @@ export default function GroupsScreen() {
     },
     []
   );
+  const chatScrollRef = useRef<ScrollView>(null);
+  const messageCount = activeCrew?.messages.length ?? 0;
+  const canSend = Boolean(activeCrew && draftMessage.trim().length > 0);
+
+  useEffect(() => {
+    if (messageCount > 0) {
+      chatScrollRef.current?.scrollToEnd({ animated: true });
+    }
+  }, [messageCount, groupMode, selectedCrewId]);
+
+  const handleSendMessage = () => {
+    const text = draftMessage.trim();
+    if (!text || !activeCrew) {
+      return;
+    }
+
+    const newMessage: GroupMessage = {
+      id: `${Date.now()}`,
+      sender: "You",
+      text,
+      isSelf: true,
+    };
+
+    setGroups((prev) => {
+      const currentModeConfig = prev[groupMode];
+      if (!currentModeConfig) {
+        return prev;
+      }
+
+      const updatedMembers = currentModeConfig.members.map((member) => {
+        if (member.id !== activeCrew.id) {
+          return member;
+        }
+
+        return {
+          ...member,
+          messages: [...member.messages, newMessage],
+        };
+      });
+
+      return {
+        ...prev,
+        [groupMode]: {
+          ...currentModeConfig,
+          members: updatedMembers,
+        },
+      };
+    });
+
+    setDraftMessage("");
+  };
 
   return (
     <View style={[styles.root, { backgroundColor }]}>
@@ -324,7 +397,7 @@ export default function GroupsScreen() {
                       isActive && styles.toggleLabelActive,
                     ]}
                   >
-                    {groupConfigurations[mode].title}
+                    {groups[mode].title}
                   </ThemedText>
                 </TouchableOpacity>
               );
@@ -420,6 +493,7 @@ export default function GroupsScreen() {
               Messages
             </ThemedText>
             <ScrollView
+              ref={chatScrollRef}
               style={styles.chatScrollView}
               contentContainerStyle={styles.chatContent}
               showsVerticalScrollIndicator={false}
@@ -478,6 +552,14 @@ export default function GroupsScreen() {
                 onChangeText={setDraftMessage}
                 placeholder="Write a message..."
                 placeholderTextColor={placeholderColor}
+                onSubmitEditing={() => {
+                  if (canSend) {
+                    handleSendMessage();
+                  }
+                }}
+                returnKeyType="send"
+                enablesReturnKeyAutomatically
+                blurOnSubmit={false}
                 style={[
                   styles.chatInput,
                   {
@@ -488,7 +570,13 @@ export default function GroupsScreen() {
                 ]}
               />
               <TouchableOpacity
-                style={[styles.sendButton, { backgroundColor: tintColor }]}
+                onPress={handleSendMessage}
+                disabled={!canSend}
+                style={[
+                  styles.sendButton,
+                  { backgroundColor: tintColor },
+                  !canSend && styles.sendButtonDisabled,
+                ]}
                 activeOpacity={0.8}
               >
                 <ThemedText style={styles.sendButtonText}>Send</ThemedText>
@@ -673,6 +761,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 24,
+  },
+  sendButtonDisabled: {
+    opacity: 0.4,
   },
   sendButtonText: {
     color: "#FFFFFF",
