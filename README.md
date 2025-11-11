@@ -29,15 +29,26 @@ cd backend
 ```bash
 cd frontend
 npm install
-npm start
 ```
 
-Then:
+Install the Expo CLI if you haven’t already:
 
-- Press `w` to open in web browser
-- Press `a` to open Android emulator
-- Press `i` to open iOS simulator (macOS only)
-- Scan QR code with Expo Go app
+```bash
+npm install -g expo-cli
+```
+
+Start the application using the Expo tunnel (handy for testing on physical devices):
+
+```bash
+npx expo start --tunnel
+```
+
+Once Metro starts, you can:
+
+- Press `w` to open in the browser
+- Press `a` to launch an Android emulator
+- Press `i` to launch the iOS simulator (macOS only)
+- Scan the QR code with the Expo Go app to run it on your device
 
 ## Prerequisites
 
@@ -88,27 +99,6 @@ dating-app/
    npm install
    ```
 
-## Configuration
-
-### Environment Variables
-
-**Backend** (`backend/.env` - optional):
-
-```env
-PYTHONUNBUFFERED=1
-DATABASE_URL=sqlite:///./app.db
-SECRET_KEY=your-secret-key
-```
-
-**Frontend** (`frontend/.env`):
-
-```env
-EXPO_PUBLIC_API_URL=http://localhost:8080
-NODE_ENV=development
-```
-
-**Note:** Expo env vars must be prefixed with `EXPO_PUBLIC_` to be accessible in client code.
-
 ## Development
 
 ### Installing Dependencies
@@ -129,13 +119,6 @@ npm install <package>      # Production
 npm install -D <package>   # Development
 ```
 
-### Hot Reload
-
-Both services support hot reload:
-
-- **Backend**: Auto-restarts on Python file changes
-- **Frontend**: Instant updates on React/TypeScript changes
-
 ### Code Quality
 
 ```bash
@@ -151,55 +134,6 @@ cd frontend && npm run lint
 
 - **Swagger UI**: http://localhost:8080/docs
 - **ReDoc**: http://localhost:8080/redoc
-
-## Troubleshooting
-
-### Backend Issues
-
-**Poetry not found:**
-
-```bash
-# Install Poetry
-curl -sSL https://install.python-poetry.org | python3 -
-# Add to PATH (~/.zshrc or ~/.bashrc)
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-**Dependencies won't install:**
-
-```bash
-cd backend
-poetry self update
-poetry cache clear pypi --all
-poetry install
-```
-
-**Import errors:**
-
-- Make sure you're in the Poetry virtual environment: `poetry shell`
-
-### Frontend Issues
-
-**Node modules issues:**
-
-```bash
-cd frontend
-rm -rf node_modules package-lock.json
-npm cache clean --force
-npm install
-```
-
-**Metro bundler cache:**
-
-```bash
-cd frontend
-npm start -- --reset-cache
-```
-
-**Port conflicts:**
-
-- Backend: Change port in `start.sh` or uvicorn command
-- Frontend: Expo will suggest an alternative port automatically
 
 ## Resources
 
