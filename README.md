@@ -19,7 +19,25 @@ cd backend
 ./start.sh
 ```
 
-**Access:**
+**Database Migrations (Alembic)**
+
+```bash
+cd backend
+
+# check env
+poetry env list
+
+# apply latest migrations
+poetry run alembic upgrade head
+
+# create a new migration from models
+poetry run alembic revision --autogenerate -m "describe change"
+
+# undo last migration (optional)
+poetry run alembic downgrade -1
+```
+
+**Access**
 
 - API: http://localhost:8080
 - API Docs: http://localhost:8080/docs
@@ -86,10 +104,11 @@ dating-app/
    poetry install
    ```
 
-3. Activate virtual environment:
+3. Run backend commands through Poetry:
    ```bash
-   poetry shell
+   poetry run <command>
    ```
+   (Poetry automatically manages the virtual environment; no separate shell activation needed.)
 
 ### Frontend
 
