@@ -28,13 +28,7 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
-sync_url = make_url(settings.DATABASE_URL)
-
-if sync_url.drivername.endswith("+asyncpg"):
-    sync_url = sync_url.set(drivername="postgresql+psycopg")
-elif sync_url.drivername == "postgresql":
-    sync_url = sync_url.set(drivername="postgresql+psycopg")
-
+sync_url = make_url(settings.sync_database_url)
 config.set_main_option(
     "sqlalchemy.url",
     sync_url.render_as_string(hide_password=False).replace("%", "%%"),
