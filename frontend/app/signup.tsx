@@ -5,6 +5,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -45,8 +46,8 @@ export default function SignUpScreen() {
 
     if (!password) {
       newErrors.password = "Password is required";
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    } else if (password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
     }
 
     setErrors(newErrors);
@@ -61,8 +62,12 @@ export default function SignUpScreen() {
       await signUp(email, password, name);
       router.push("/profile" as any);
     } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.";
       console.error("Sign up error:", error);
-      // Handle error (show toast, etc.)
+      Alert.alert("Sign Up Failed", message);
     } finally {
       setLoading(false);
     }
