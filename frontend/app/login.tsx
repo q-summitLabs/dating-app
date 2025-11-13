@@ -16,27 +16,20 @@ import { Input } from "@/components/input";
 import { useAuth } from "@/context/auth-context";
 import { useThemeColor } from "@/hooks/use-theme-color";
 
-export default function SignUpScreen() {
+export default function LoginScreen() {
   const router = useRouter();
-  const { signUp } = useAuth();
+  const { signIn } = useAuth();
   const backgroundColor = useThemeColor({}, "background");
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [errors, setErrors] = useState<{
-    email?: string;
-    password?: string;
-    name?: string;
-  }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {}
+  );
   const [loading, setLoading] = useState(false);
 
   const validate = () => {
-    const newErrors: { email?: string; password?: string; name?: string } = {};
-
-    if (!name.trim()) {
-      newErrors.name = "Name is required";
-    }
+    const newErrors: { email?: string; password?: string } = {};
 
     if (!email.trim()) {
       newErrors.email = "Email is required";
@@ -46,37 +39,28 @@ export default function SignUpScreen() {
 
     if (!password) {
       newErrors.password = "Password is required";
-    } else if (password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignUp = async () => {
+  const handleSignIn = async () => {
     if (!validate()) return;
 
     setLoading(true);
-    const result = await signUp(email, password, name);
+    const result = await signIn(email, password);
     setLoading(false);
 
     if (!result.success) {
-      const message =
-        result.message ?? "Something went wrong. Please try again.";
-
-      if (message.toLowerCase().includes("already")) {
-        Alert.alert(
-          "Email Already In Use",
-          "Looks like there’s already an account with this email. Try signing in instead."
-        );
-      } else {
-        Alert.alert("Sign Up Failed", message);
-      }
+      Alert.alert(
+        "Sign In Failed",
+        result.message ?? "Something went wrong. Please try again."
+      );
       return;
     }
 
-    router.push("/home" as any);
+    router.replace("/home" as any);
   };
 
   return (
@@ -97,25 +81,13 @@ export default function SignUpScreen() {
           >
             <View style={styles.content}>
               <ThemedText type="heading" style={styles.title}>
-                Create Account
+                Welcome Back
               </ThemedText>
               <ThemedText style={styles.subtitle}>
-                Sign up to start connecting with people
+                Sign in to continue your journey
               </ThemedText>
 
               <View style={styles.form}>
-                <Input
-                  label="Name"
-                  placeholder="Enter your name"
-                  value={name}
-                  onChangeText={(text) => {
-                    setName(text);
-                    if (errors.name) setErrors({ ...errors, name: undefined });
-                  }}
-                  error={errors.name}
-                  autoCapitalize="words"
-                />
-
                 <Input
                   label="Email"
                   placeholder="Enter your email"
@@ -133,7 +105,7 @@ export default function SignUpScreen() {
 
                 <Input
                   label="Password"
-                  placeholder="Create a password"
+                  placeholder="Enter your password"
                   value={password}
                   onChangeText={(text) => {
                     setPassword(text);
@@ -146,8 +118,8 @@ export default function SignUpScreen() {
                 />
 
                 <Button
-                  title="Continue"
-                  onPress={handleSignUp}
+                  title="Sign In"
+                  onPress={handleSignIn}
                   loading={loading}
                   style={styles.button}
                 />
@@ -155,13 +127,13 @@ export default function SignUpScreen() {
 
               <View style={styles.footer}>
                 <ThemedText style={styles.footerText}>
-                  Already have an account?{" "}
+                  New to Yolk?{" "}
                   <ThemedText
                     type="link"
-                    onPress={() => router.push("/login" as any)}
+                    onPress={() => router.push("/signup" as any)}
                     style={styles.link}
                   >
-                    Sign in
+                    Create an account
                   </ThemedText>
                 </ThemedText>
               </View>
