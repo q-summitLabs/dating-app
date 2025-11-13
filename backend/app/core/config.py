@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     database_user: Optional[str] = Field(default=None, alias="DATABASE_USER")
     database_password: Optional[SecretStr] = Field(default=None, alias="DATABASE_PASSWORD")
     database_sslmode: Optional[str] = Field(default="require", alias="DATABASE_SSLMODE")
+    test_database_url: Optional[str] = Field(default=None, alias="TEST_DATABASE_URL")
+
+    jwt_secret_key: SecretStr = Field(default=SecretStr("change-me"), alias="JWT_SECRET_KEY")
+    jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
+    access_token_expire_minutes: int = Field(default=15, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
+    refresh_token_expire_minutes: int = Field(default=60 * 24 * 7, alias="REFRESH_TOKEN_EXPIRE_MINUTES")
 
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),
@@ -57,7 +63,6 @@ class Settings(BaseSettings):
             host=self.database_host,
             port=self.database_port,
             database=self.database_name,
-            query={"sslmode": self.database_sslmode} if self.database_sslmode else None,
         )
         return url.render_as_string(hide_password=False)
 
