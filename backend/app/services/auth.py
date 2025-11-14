@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Optional
+from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -31,7 +32,7 @@ class AuthService:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_auth_user_by_id(db: AsyncSession, auth_user_id: int) -> Optional[AuthUser]:
+    async def get_auth_user_by_id(db: AsyncSession, auth_user_id: UUID) -> Optional[AuthUser]:
         result = await db.execute(
             select(AuthUser)
             .where(AuthUser.id == auth_user_id)
