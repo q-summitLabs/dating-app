@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
 
 from app.core.security import create_access_token, create_refresh_token, decode_token
 from app.database import get_db
@@ -18,8 +19,8 @@ from app.services.auth import auth_service
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def _issue_tokens(auth_user_id: int, *, user_id: int) -> AuthTokens:
-    claims = {"user_id": user_id}
+def _issue_tokens(auth_user_id: UUID, *, user_id: UUID) -> AuthTokens:
+    claims = {"user_id": str(user_id)}
     access = create_access_token(str(auth_user_id), additional_claims=claims)
     refresh = create_refresh_token(str(auth_user_id), additional_claims=claims)
     return AuthTokens(access_token=access, refresh_token=refresh)
@@ -77,7 +78,7 @@ async def refresh_token(
         )
 
     try:
-        auth_user_id = int(subject)
+        auth_user_id = UUID(subject)
     except (TypeError, ValueError) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

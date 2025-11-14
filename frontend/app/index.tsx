@@ -17,12 +17,7 @@ export default function WelcomeScreen() {
   useEffect(() => {
     if (!loading) {
       if (isAuthenticated && user) {
-        // Check if profile is complete
-        if (user.age && user.bio) {
-          router.replace("/home" as any);
-        } else {
-          router.replace("/profile" as any);
-        }
+        router.replace("/home" as any);
       }
     }
   }, [isAuthenticated, user, loading, router]);
@@ -81,9 +76,15 @@ export default function WelcomeScreen() {
 
             <View style={styles.buttonContainer}>
               <Button
-                title="Get Started"
+                title="Create Account"
                 onPress={() => router.push("/signup" as any)}
                 style={styles.button}
+              />
+              <Button
+                title="Sign In"
+                onPress={() => router.push("/login" as any)}
+                style={[styles.button, styles.secondaryButton]}
+                variant="secondary"
               />
             </View>
           </View>
@@ -154,8 +155,12 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: "100%",
     maxWidth: 400,
+    gap: 12,
   },
   button: {
     width: "100%",
+  },
+  secondaryButton: {
+    marginTop: 8,
   },
 });

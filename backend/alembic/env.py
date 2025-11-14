@@ -6,7 +6,7 @@ from sqlalchemy.engine import make_url
 
 from alembic import context
 
-from app.models.user import Base
+from app.models.base import Base
 from app.core.config import settings
 
 import os

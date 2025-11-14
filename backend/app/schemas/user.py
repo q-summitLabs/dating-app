@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from typing import Any, List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class UserRead(BaseModel):
-    id: int
+    id: UUID
     name: str
     email: EmailStr
     phone_number: Optional[str] = None

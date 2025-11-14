@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     database_password: Optional[SecretStr] = Field(default=None, alias="DATABASE_PASSWORD")
     database_sslmode: Optional[str] = Field(default="require", alias="DATABASE_SSLMODE")
     test_database_url: Optional[str] = Field(default=None, alias="TEST_DATABASE_URL")
+    database_schema: str = Field(default="yolk_staging", alias="DATABASE_SCHEMA")
 
     jwt_secret_key: SecretStr = Field(default=SecretStr("change-me"), alias="JWT_SECRET_KEY")
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
