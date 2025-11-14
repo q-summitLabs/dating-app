@@ -23,22 +23,23 @@ class AuthService:
     """Service layer handling authentication-related persistence logic."""
 
     @staticmethod
-    async def get_auth_user_by_email(db: AsyncSession, email: str) -> Optional[AuthUser]:
-        result = await db.execute(
-            select(AuthUser)
-            .where(AuthUser.email == email)
-            .options(selectinload(AuthUser.profile))
-        )
+    async def _get_auth_user(
+        db: AsyncSession,
+        *filters,
+    ) -> Optional[AuthUser]:
+        query = select(AuthUser).options(selectinload(AuthUser.profile))
+        if filters:
+            query = query.where(*filters)
+        result = await db.execute(query)
         return result.scalar_one_or_none()
 
     @staticmethod
+    async def get_auth_user_by_email(db: AsyncSession, email: str) -> Optional[AuthUser]:
+        return await AuthService._get_auth_user(db, AuthUser.email == email)
+
+    @staticmethod
     async def get_auth_user_by_id(db: AsyncSession, auth_user_id: UUID) -> Optional[AuthUser]:
-        result = await db.execute(
-            select(AuthUser)
-            .where(AuthUser.id == auth_user_id)
-            .options(selectinload(AuthUser.profile))
-        )
-        return result.scalar_one_or_none()
+        return await AuthService._get_auth_user(db, AuthUser.id == auth_user_id)
 
     @staticmethod
     async def create_user_with_auth(db: AsyncSession, data: SignUpRequest) -> AuthUser:
