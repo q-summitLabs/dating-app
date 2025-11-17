@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth as auth_routes
+from app.api.routes import auth as auth_routes, photos as photos_routes
 
 app = FastAPI(title="Dating App Backend")
 
@@ -14,6 +14,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_routes.router)
+app.include_router(photos_routes.router)
 
 
 @app.get("/ping")

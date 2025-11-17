@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = Field(default=15, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
     refresh_token_expire_minutes: int = Field(default=60 * 24 * 7, alias="REFRESH_TOKEN_EXPIRE_MINUTES")
 
+    # AWS S3 Configuration
+    aws_access_key_id: Optional[str] = Field(default=None, alias="AWS_ACCESS_KEY_ID")
+    aws_secret_access_key: Optional[SecretStr] = Field(default=None, alias="AWS_SECRET_ACCESS_KEY")
+    aws_region: str = Field(default="us-east-1", alias="AWS_REGION")
+    s3_bucket_name: Optional[str] = Field(default=None, alias="S3_BUCKET_NAME")
+    s3_photo_prefix: str = Field(default="photos", alias="S3_PHOTO_PREFIX")
+    s3_endpoint_url: Optional[str] = Field(default=None, alias="S3_ENDPOINT_URL")  # For local testing with LocalStack
+
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8",
