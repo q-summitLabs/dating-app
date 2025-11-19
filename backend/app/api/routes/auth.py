@@ -15,9 +15,24 @@ from app.schemas.auth import (
     SignUpRequest,
     TokenRefreshRequest,
 )
+from app.schemas.user import UserRead
 from app.services.auth import auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@router.get("/test-code-version")
+async def test_code_version():
+    """Test endpoint to verify server has latest code."""
+    from app.services.auth import auth_service
+    import inspect
+    sig = inspect.signature(auth_service.get_auth_user_by_id)
+    param_type = sig.parameters['auth_user_id'].annotation
+    return {
+        "status": "ok",
+        "auth_user_id_type": str(param_type),
+        "code_version": "updated"
+    }
 
 
 def _issue_tokens(auth_user_id: int, *, user_id: UUID) -> AuthTokens:
@@ -56,14 +71,9 @@ async def login(
                 detail="User profile not found.",
             )
         
-        try:
-            tokens = _issue_tokens(auth_user.id, user_id=auth_user.user_id)
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create tokens: {type(e).__name__}: {str(e)}",
-            ) from e
+        tokens = _issue_tokens(auth_user.id, user_id=auth_user.user_id)
         
+        # Create response - Pydantic will handle conversion from SQLAlchemy model
         try:
             return AuthResponse(tokens=tokens, user=auth_user.profile)
         except Exception as e:
