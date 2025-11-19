@@ -23,6 +23,7 @@ from sqlalchemy import (
     func,
     text,
 )
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.models.user import Base
@@ -54,7 +55,7 @@ class Group(Base):
     
     # Who created this group (useful for permissions later)
     created_by_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("yolk_staging.users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
@@ -98,13 +99,10 @@ class GroupMember(Base):
     """
     __tablename__ = "group_members"
     __table_args__ = (
-        {"schema": "yolk_staging"},
-        # UNIQUE constraint: Can't add same user to same group twice
         UniqueConstraint('group_id', 'user_id', name='uq_group_member'),
-        # Index for fast "find all groups for a user" queries
         Index('idx_group_members_user', 'user_id'),
-        # Index for fast "find all members of a group" queries
         Index('idx_group_members_group', 'group_id'),
+        {"schema": "yolk_staging"},
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -117,7 +115,7 @@ class GroupMember(Base):
         index=True,
     )
     user_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("yolk_staging.users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -134,7 +132,7 @@ class GroupMember(Base):
     
     # Relationships
     group = relationship("Group", back_populates="members")
-    user = relationship("User")
+    user = relationship("User", foreign_keys=[user_id])
 
 
 # ============================================================================
@@ -169,13 +167,10 @@ class Like(Base):
     """
     __tablename__ = "likes"
     __table_args__ = (
-        {"schema": "yolk_staging"},
-        # Can't like the same group twice
         UniqueConstraint('liker_group_id', 'likee_group_id', name='uq_like'),
-        # Index for "who did this group like?"
         Index('idx_likes_liker', 'liker_group_id', 'status'),
-        # Index for "who liked this group?"
         Index('idx_likes_likee', 'likee_group_id', 'status'),
+        {"schema": "yolk_staging"},
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -198,7 +193,7 @@ class Like(Base):
     
     # Who initiated the like (useful for notifications)
     initiator_user_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("yolk_staging.users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
@@ -260,16 +255,11 @@ class Match(Base):
     """
     __tablename__ = "matches"
     __table_args__ = (
-        {"schema": "yolk_staging"},
-        # Can't match the same two groups twice
         UniqueConstraint('group1_id', 'group2_id', name='uq_match'),
-        # CHECK constraint: Ensures group1_id < group2_id (prevents duplicates)
-        # This means we always store (1,2) never (2,1)
         CheckConstraint('group1_id < group2_id', name='check_match_order'),
-        # Index for "all matches for group 1"
         Index('idx_matches_group1', 'group1_id', 'matched_at'),
-        # Index for "all matches for group 2"
         Index('idx_matches_group2', 'group2_id', 'matched_at'),
+        {"schema": "yolk_staging"},
     )
 
     id = Column(Integer, primary_key=True, index=True)

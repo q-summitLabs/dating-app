@@ -1,8 +1,9 @@
-from sqlalchemy import ARRAY, JSON, Boolean, Column, DateTime, ForeignKey, String, text
+from sqlalchemy import ARRAY, JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.models.base import Base, SCHEMA_PREFIX, TimestampMixin, UUIDPrimaryKeyMixin
+
 
 class User(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "users"
@@ -17,9 +18,10 @@ class User(UUIDPrimaryKeyMixin, Base):
     auth_user = relationship("AuthUser", back_populates="profile", uselist=False)
 
 
-class AuthUser(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class AuthUser(TimestampMixin, Base):
     __tablename__ = "auth_users"
 
+    id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     is_active = Column(Boolean, nullable=False, server_default=text("true"))

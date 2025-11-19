@@ -7,6 +7,8 @@ from sqlalchemy.engine import make_url
 from alembic import context
 
 from app.models.base import Base
+from app.models.matching import Group, GroupMember, Like, Match
+from app.models.user import AuthUser, User
 from app.core.config import settings
 
 import os
