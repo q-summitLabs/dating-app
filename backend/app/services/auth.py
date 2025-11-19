@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Optional
-from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -38,7 +37,7 @@ class AuthService:
         return await AuthService._get_auth_user(db, AuthUser.email == email)
 
     @staticmethod
-    async def get_auth_user_by_id(db: AsyncSession, auth_user_id: UUID) -> Optional[AuthUser]:
+    async def get_auth_user_by_id(db: AsyncSession, auth_user_id: int) -> Optional[AuthUser]:
         return await AuthService._get_auth_user(db, AuthUser.id == auth_user_id)
 
     @staticmethod
@@ -78,9 +77,10 @@ class AuthService:
             await db.commit()
         except IntegrityError as exc:
             await db.rollback()
+            error_msg = str(exc.orig) if hasattr(exc, 'orig') else str(exc)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Unable to create user with the provided details.",
+                detail=f"Unable to create user: {error_msg}",
             ) from exc
 
         await db.refresh(auth_user, attribute_names=["profile"])
@@ -107,9 +107,21 @@ class AuthService:
                 detail="User account is inactive.",
             )
 
+        # Store ID before commit to avoid lazy loading issues
+        auth_user_id = auth_user.id
+        
         auth_user.last_login = datetime.now(timezone.utc)
         await db.commit()
-        await db.refresh(auth_user, attribute_names=["profile"])
+        
+        # Re-query with eager loading to ensure profile is available after commit
+        # This prevents lazy loading issues in async context
+        result = await db.execute(
+            select(AuthUser)
+            .where(AuthUser.id == auth_user_id)
+            .options(selectinload(AuthUser.profile))
+        )
+        auth_user = result.scalar_one()
+        
         return auth_user
 
 

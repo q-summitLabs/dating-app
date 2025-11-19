@@ -1,7 +1,8 @@
+"""Authentication dependencies for protected routes."""
+
 from __future__ import annotations
 
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -55,7 +56,7 @@ async def get_current_user(
         )
 
     try:
-        auth_user_id = UUID(subject)
+        auth_user_id = int(subject)
     except (TypeError, ValueError) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
