@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
 
 from app.core.security import create_access_token, create_refresh_token, decode_token
 from app.database import get_db
@@ -14,12 +15,27 @@ from app.schemas.auth import (
     SignUpRequest,
     TokenRefreshRequest,
 )
+from app.schemas.user import UserRead
 from app.services.auth import auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def _issue_tokens(auth_user_id: UUID, *, user_id: UUID) -> AuthTokens:
+@router.get("/test-code-version")
+async def test_code_version():
+    """Test endpoint to verify server has latest code."""
+    from app.services.auth import auth_service
+    import inspect
+    sig = inspect.signature(auth_service.get_auth_user_by_id)
+    param_type = sig.parameters['auth_user_id'].annotation
+    return {
+        "status": "ok",
+        "auth_user_id_type": str(param_type),
+        "code_version": "updated"
+    }
+
+
+def _issue_tokens(auth_user_id: int, *, user_id: UUID) -> AuthTokens:
     claims = {"user_id": str(user_id)}
     access = create_access_token(str(auth_user_id), additional_claims=claims)
     refresh = create_refresh_token(str(auth_user_id), additional_claims=claims)
@@ -41,14 +57,42 @@ async def login(
     payload: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ) -> AuthResponse:
-    auth_user = await auth_service.authenticate_user(db, payload.email, payload.password)
-    if not auth_user:
+    try:
+        auth_user = await auth_service.authenticate_user(db, payload.email, payload.password)
+        if not auth_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password.",
+            )
+        
+        if not auth_user.profile:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="User profile not found.",
+            )
+        
+        tokens = _issue_tokens(auth_user.id, user_id=auth_user.user_id)
+        
+        # Create response - Pydantic will handle conversion from SQLAlchemy model
+        try:
+            return AuthResponse(tokens=tokens, user=auth_user.profile)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to create response: {type(e).__name__}: {str(e)}",
+            ) from e
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        error_detail = f"{type(e).__name__}: {str(e)}"
+        traceback.print_exc()
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password.",
-        )
-    tokens = _issue_tokens(auth_user.id, user_id=auth_user.user_id)
-    return AuthResponse(tokens=tokens, user=auth_user.profile)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Login failed: {error_detail}",
+        ) from e
 
 
 @router.post("/token/refresh", response_model=AuthTokens)
@@ -78,7 +122,7 @@ async def refresh_token(
         )
 
     try:
-        auth_user_id = UUID(subject)
+        auth_user_id = int(subject)
     except (TypeError, ValueError) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
